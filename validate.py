@@ -19,6 +19,10 @@ import time
 import traceback
 import warnings
 
+# Enable ANSI escape codes on Windows
+if os.name == 'nt':
+    os.system('color')
+
 warnings.filterwarnings('ignore')
 
 
