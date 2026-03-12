@@ -7,6 +7,7 @@ MODEL_MODULES = [
     "alexnet",
     "alexnet_sin",
     "avid",
+    "bert",
     "blip",
     "convnext",
     "convlstm",
