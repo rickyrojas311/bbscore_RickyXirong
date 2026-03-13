@@ -26,3 +26,4 @@ except ImportError as _e:
 from benchmarks.SSV2 import SSV2Benchmark
 from benchmarks.V1SineGratings import V1SineGratingsBenchmark
 from benchmarks.LeBel2023 import LeBel2023Benchmark
+from benchmarks.PodcastECoG import PodcastECoGBenchmark
