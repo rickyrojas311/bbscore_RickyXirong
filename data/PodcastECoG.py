@@ -46,8 +46,8 @@ ALL_SUBJECTS = [f"sub-{i:02d}" for i in range(1, 10)]
  
 S3_BASE = "s3://openneuro.org/ds005574"
  
-DEFAULT_EPOCH_TMIN = 0.0 # This can be overwritten by benchmark config
-DEFAULT_EPOCH_TMAX = 0.5
+DEFAULT_EPOCH_TMIN = -0.5 # This can be overwritten by benchmark config
+DEFAULT_EPOCH_TMAX = 1.0
  
  
 # ──────────────────────────────────────────────────────────────────────
