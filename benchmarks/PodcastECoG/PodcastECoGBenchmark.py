@@ -537,6 +537,11 @@ class PodcastECoGBenchmark:
         print(f"  Downsampled to {n_times} timepoints "
               f"({self.epoch_sfreq:.0f} Hz)")
 
+        # Z-score across words (per electrode per timepoint) for regression
+        ecog_mean = ecog_data.mean(axis=0, keepdims=True)   # (1, n_elec, n_times)
+        ecog_std  = ecog_data.std(axis=0, keepdims=True) + 1e-12
+        ecog_data = (ecog_data - ecog_mean) / ecog_std
+
         # Time axis in seconds at target sfreq
         times = np.linspace(self.epoch_tmin, self.epoch_tmax, n_times)
 
