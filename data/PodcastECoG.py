@@ -378,29 +378,34 @@ class PodcastECoGAssembly(BaseDataset):
         word_onsets: List[float],
     ) -> np.ndarray:
         """
-        Epoch continuous high-gamma at word onsets, averaging power
-        in each [onset + tmin, onset + tmax] window.
- 
+        Epoch continuous high-gamma at word onsets, preserving the
+        time dimension within each [onset + tmin, onset + tmax] window.
+
         Returns:
-            (n_words, n_channels) mean high-gamma power per word
+            (n_words, n_channels, n_times) high-gamma per word
         """
         n_channels = data.shape[0]
         n_words = len(word_onsets)
         n_total = data.shape[1]
-        epoched = np.full((n_words, n_channels), np.nan)
- 
+
         tmin_samp = int(round(self.epoch_tmin * sfreq))
         tmax_samp = int(round(self.epoch_tmax * sfreq))
- 
+        n_times = tmax_samp - tmin_samp
+
+        epoched = np.full((n_words, n_channels, n_times), np.nan)
+
         for i, onset in enumerate(word_onsets):
-            start = int(round(onset * sfreq)) + tmin_samp
-            end = int(round(onset * sfreq)) + tmax_samp
-            start = max(0, start)
-            end = min(n_total, end)
-            if end <= start:
+            onset_samp = int(round(onset * sfreq))
+            start = onset_samp + tmin_samp
+            end = onset_samp + tmax_samp
+            start_clipped = max(0, start)
+            end_clipped = min(n_total, end)
+            if end_clipped <= start_clipped:
                 continue
-            epoched[i] = np.nanmean(data[:, start:end], axis=1)
- 
+            ep_start = start_clipped - start  # offset into epoch window
+            ep_end = ep_start + (end_clipped - start_clipped)
+            epoched[i, :, ep_start:ep_end] = data[:, start_clipped:end_clipped]
+
         return epoched
  
     # ── Main interface ───────────────────────────────────────────────
@@ -421,7 +426,7 @@ class PodcastECoGAssembly(BaseDataset):
                           extract word_onsets if not given directly).
  
         Returns:
-            ecog_data: (n_words, n_electrodes) — good electrodes
+            ecog_data: (n_words, n_electrodes, n_times) — good electrodes
                        concatenated across all subjects.
             ncsnr: (n_electrodes,) — placeholder (ones).
  
