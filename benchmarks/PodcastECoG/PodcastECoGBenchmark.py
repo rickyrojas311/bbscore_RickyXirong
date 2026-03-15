@@ -442,7 +442,7 @@ class PodcastECoGBenchmark:
                     )
             electrode_time_scores[e] = fold_scores.mean(axis=0)
 
-        return electrode_time_scores.mean(axis=0)  # (n_times,)
+        return electrode_time_scores  # (n_electrodes, n_times)
 
     def _plot_time_resolved(
         self,
@@ -559,12 +559,14 @@ class PodcastECoGBenchmark:
 
         # 4. Time-resolved ridge regression for each layer
         layer_time_scores: Dict[str, np.ndarray] = {}
+        electrode_time_scores: Dict[str, np.ndarray] = {}
         for l_name, X in layer_features.items():
             print(f"Running time-resolved ridge for {l_name} "
                   f"({self.n_cv_folds}-fold CV)...")
-            layer_time_scores[l_name] = (
+            electrode_time_scores[l_name] = (
                 self._run_kfold_ridge_time_resolved(X, ecog_data)
-            )
+            )  # (n_electrodes, n_times)
+            layer_time_scores[l_name] = electrode_time_scores[l_name].mean(axis=0)
             peak = float(np.max(layer_time_scores[l_name]))
             print(f"  Peak Pearson: {peak:.4f}")
 
@@ -575,9 +577,10 @@ class PodcastECoGBenchmark:
         }
 
         results = {
-            'layer_time_scores': layer_time_scores,  # {layer: (n_times,)}
-            'times': times,                           # (n_times,) in seconds
-            'layer_summary_pearson': layer_summary,   # {layer: float}
+            'layer_time_scores': layer_time_scores,           # {layer: (n_times,)}
+            'electrode_time_scores': electrode_time_scores,   # {layer: (n_electrodes, n_times)}
+            'times': times,                                   # (n_times,) in seconds
+            'layer_summary_pearson': layer_summary,           # {layer: float}
             'n_words': n_words,
             'n_electrodes': n_electrodes,
             'n_times': n_times,
