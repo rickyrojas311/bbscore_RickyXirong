@@ -54,11 +54,12 @@ class PodcastECoGBenchmark:
         self,
         model_identifier: str,
         layer_name: Union[str, List[str]],
-        subjects: Optional[List[str]] = ["sub-01"], # only run one subject to reduce memory load
+        subjects: Optional[List[str]] = ["sub-03"], # only run one subject to reduce memory load
         n_cv_folds: int = 5,
         epoch_tmin: float = -0.5,
         epoch_tmax: float = 1.0,
         context_words: int = 512,
+        epoch_sfreq: float = 100,
         batch_size: Union[int, List[int]] = None,
         debug: bool = False,
     ):
@@ -74,6 +75,8 @@ class PodcastECoGBenchmark:
             epoch_tmax: ECoG epoch end relative to word onset (s).
             context_words: Max number of preceding words to include
                 as context when running the language model.
+            epoch_sfreq: Target sampling frequency (Hz) to downsample
+                ECoG to before ridge regression (default: 100).
             batch_size: Not used directly but kept for run.py compat.
             debug: Print extra diagnostics.
         """
@@ -83,6 +86,7 @@ class PodcastECoGBenchmark:
         self.epoch_tmin = epoch_tmin
         self.epoch_tmax = epoch_tmax
         self.context_words = context_words
+        self.epoch_sfreq = epoch_sfreq
         self.model_identifier = model_identifier
  
         if isinstance(batch_size, list):
@@ -521,11 +525,18 @@ class PodcastECoGBenchmark:
             stimulus_set=stimulus_set
         )
         n_electrodes = ecog_data.shape[1]
-        n_times      = ecog_data.shape[2]
         print(f"  {ecog_data.shape[0]} words x "
-              f"{n_electrodes} electrodes x {n_times} timepoints")
+              f"{n_electrodes} electrodes x {ecog_data.shape[2]} timepoints "
+              f"(native sfreq)")
 
-        # Time axis in seconds
+        # Downsample time axis to target sfreq
+        from scipy.signal import resample
+        n_times = int(round((self.epoch_tmax - self.epoch_tmin) * self.epoch_sfreq))
+        ecog_data = resample(ecog_data, n_times, axis=2)
+        print(f"  Downsampled to {n_times} timepoints "
+              f"({self.epoch_sfreq:.0f} Hz)")
+
+        # Time axis in seconds at target sfreq
         times = np.linspace(self.epoch_tmin, self.epoch_tmax, n_times)
 
         # 3. Extract per-layer features
