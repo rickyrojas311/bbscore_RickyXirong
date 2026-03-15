@@ -530,9 +530,10 @@ class PodcastECoGBenchmark:
               f"(native sfreq)")
 
         # Downsample time axis to target sfreq
-        from scipy.signal import resample
+        import mne
+        native_sfreq = 512.0
         n_times = int(round((self.epoch_tmax - self.epoch_tmin) * self.epoch_sfreq))
-        ecog_data = resample(ecog_data, n_times, axis=2)
+        ecog_data = mne.filter.resample(ecog_data, up=self.epoch_sfreq, down=native_sfreq, axis=2)
         print(f"  Downsampled to {n_times} timepoints "
               f"({self.epoch_sfreq:.0f} Hz)")
 
